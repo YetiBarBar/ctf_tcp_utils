@@ -1,0 +1,17 @@
+[package]
+name = "ctf_tcp_utils"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "TCP helpers for CTFs"
+documentation = "https://docs.rs/ctf_tcp_utils"
+repository = "https://github.com/YetiBarBar/ctf_tcp_utils"
+readme = "README.md"
+exclude = [".gitignore"]
+authors = ["YetiBarBar"]
+keywords = ["ctf", "tcp"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = "1"
