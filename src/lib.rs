@@ -17,10 +17,10 @@ pub struct TcpHandler {
 }
 
 impl TcpHandler {
-    pub fn new(url: &str, port: u16) -> Result<Self, CtfTcpHandlerError> {
+    pub fn new(server_url: &str, port: u16) -> Result<Self, CtfTcpHandlerError> {
         let stream = {
-            let uri = format!("{url}:{port}");
-            TcpStream::connect(uri).map_err(|_| CtfTcpHandlerError::ConnectionError)
+            let connection_uri = format!("{server_url}:{port}");
+            TcpStream::connect(connection_uri).map_err(|_| CtfTcpHandlerError::ConnectionError)
         }?;
         stream
             .set_read_timeout(Some(std::time::Duration::from_millis(1000)))
@@ -45,8 +45,15 @@ impl TcpHandler {
     }
 
     pub fn write_answer(&mut self, answer: &str) {
-        let data = format!("{}\n", answer);
+        let data = format!("{answer}\n");
         let _size = self.stream.write(data.as_bytes());
+    }
+    pub fn set_timeout(&mut self, timeout: u64) -> Result<(), CtfTcpHandlerError> {
+        self.stream
+            .set_read_timeout(Some(std::time::Duration::from_millis(timeout)))
+            .map_err(|_| CtfTcpHandlerError::ConfigurationError)?;
+
+        Ok(())
     }
 }
 
