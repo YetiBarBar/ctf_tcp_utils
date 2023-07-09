@@ -36,18 +36,18 @@ impl TcpHandler {
 
     /// Read TCP stream until read timeout is reached. Always produces a String using UTF-8 lossy conversion.
     pub fn read_to_string(&mut self) -> String {
-        let mut acc = vec![];
+        let mut res = String::new();
         let mut buf = vec![0; 4096];
 
         loop {
-            buf.clear();
             let size = self.stream.read(&mut buf).unwrap_or(0);
             if size == 0 {
                 break;
             }
-            acc.extend_from_slice(&buf);
+            let my_str = std::str::from_utf8(&buf[..size]).unwrap_or_default();
+            res = format!("{res}{my_str}");
         }
-        String::from_utf8_lossy(&acc).into()
+        res
     }
 
     /// Read TCP stream until read timeout is reached. Always produces a String using UTF-8 lossy conversion.
