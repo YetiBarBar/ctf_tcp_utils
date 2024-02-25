@@ -96,3 +96,32 @@ pub fn run_function_loop(
     }
     Ok(tcp_handle.read_to_string())
 }
+
+/// Connect to a CTF TCP server and process the same function in loop.
+/// This version allow to set a timeout
+///
+/// # Errors
+///
+/// Fails if connection fail
+pub fn run_function_loop_with_timeout(
+    url: &str,
+    port: u16,
+    timeout: u64,
+    function: impl Fn(&str) -> Option<String>,
+) -> Result<String, CtfTcpHandlerError> {
+    let mut tcp_handle =
+        TcpHandler::new(url, port).map_err(|_| CtfTcpHandlerError::ConnectionError)?;
+    tcp_handle.set_timeout(timeout)?;
+    loop {
+        let input = tcp_handle.read_to_string();
+
+        println!("{input}");
+        if let Some(answer) = function(&input) {
+            println!("{answer}");
+            tcp_handle.write_answer(&answer);
+        } else {
+            break;
+        }
+    }
+    Ok(tcp_handle.read_to_string())
+}
