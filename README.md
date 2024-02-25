@@ -20,3 +20,11 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 ```
+
+If the CTF requires to repeat the same business logic in a loop, you can try:
+```
+fn main() {
+    let result = ctf_tcp_utils::run_function_loop("localhost", 4000, alenvers_business).unwrap();
+    println!("{result}");
+}
+```

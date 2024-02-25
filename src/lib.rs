@@ -71,3 +71,28 @@ impl TcpHandler {
         Ok(())
     }
 }
+
+/// Connect to a CTF TCP server and process the same function in loop.
+///
+/// # Errors
+///
+/// Fails if connection fail
+pub fn run_function_loop(
+    url: &str,
+    port: u16,
+    function: impl Fn(&str) -> Option<String>,
+) -> Result<String, CtfTcpHandlerError> {
+    let mut tcp_handle =
+        TcpHandler::new(url, port).map_err(|_| CtfTcpHandlerError::ConnectionError)?;
+    loop {
+        let input = tcp_handle.read_to_string();
+        println!("{input}");
+        if let Some(answer) = function(&input) {
+            println!("{answer}");
+            tcp_handle.write_answer(&answer);
+        } else {
+            break;
+        }
+    }
+    Ok(tcp_handle.read_to_string())
+}
