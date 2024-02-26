@@ -5,7 +5,7 @@ Wrapper library for TCP based CTF
 Wrapper to manage TCP connections in CTF challs.
 
 # Usage
-```
+```rust
 fn main() -> anyhow::Result<()> {
     let url = "challenge.com";
     let port = 4242;
@@ -22,9 +22,17 @@ fn main() -> anyhow::Result<()> {
 ```
 
 If the CTF requires to repeat the same business logic in a loop, you can try:
-```
-fn main() {
-    let result = ctf_tcp_utils::run_function_loop("localhost", 4000, alenvers_business).unwrap();
-    println!("{result}");
+```rust
+fn main()-> anyhow::Result<()> {
+    let result: String = ctf_tcp_utils::CtfLoopResponder::new()
+        .url("challenge.com")
+        .port(4242)
+        .timeout(250)
+        .responder_func(|input| {
+            // Insert logic here!
+        })
+        .connect_and_work()?;
+        println!("{result}");
+        Ok(())
 }
 ```

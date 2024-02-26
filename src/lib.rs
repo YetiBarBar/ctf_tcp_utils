@@ -78,53 +78,109 @@ impl TcpHandler {
     }
 }
 
-/// Connect to a CTF TCP server and process the same function in loop.
+type BoxedFunction = Box<dyn Fn(&str) -> Option<String>>;
+
+/// `CtfLoopResponder` is a Builder pattern like to build a loop responder.
 ///
-/// # Errors
-///
-/// Fails if connection fail
-pub fn run_function_loop(
-    url: &str,
-    port: u16,
-    function: impl Fn(&str) -> Option<String>,
-) -> Result<String, CtfTcpHandlerError> {
-    let mut tcp_handle =
-        TcpHandler::new(url, port).map_err(|_| CtfTcpHandlerError::ConnectionError)?;
-    loop {
-        let input = tcp_handle.read_to_string();
-        println!("{input}");
-        if let Some(answer) = function(&input) {
-            println!("{answer}");
-            tcp_handle.write_answer(&answer);
-        } else {
-            break;
-        }
-    }
-    Ok(tcp_handle.read_to_string())
+/// The main function connect to the server and run the same routine on every incoming message.
+pub struct CtfLoopResponder<'a> {
+    url: Option<&'a str>,
+    port: Option<u16>,
+    timeout: Option<u64>,
+    responder_func: Option<BoxedFunction>,
 }
 
-/// Connect to a CTF TCP server and process the same function in loop.
-///
-/// # Errors
-///
-/// Fails if connection fail
-pub fn run_function_loop_with_timeout(
-    url: &str,
-    port: u16,
-    timeout: u64,
-    function: impl Fn(&str) -> Option<String>,
-) -> Result<String, CtfTcpHandlerError> {
-    let mut tcp_handle = TcpHandler::new_with_timeout(url, port, timeout)
-        .map_err(|_| CtfTcpHandlerError::ConnectionError)?;
-    loop {
-        let input = tcp_handle.read_to_string();
-        println!("{input}");
-        if let Some(answer) = function(&input) {
-            println!("{answer}");
-            tcp_handle.write_answer(&answer);
-        } else {
-            break;
+impl<'a> Default for CtfLoopResponder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<'a> CtfLoopResponder<'a> {
+    #[must_use]
+    /// Build a new empty `CtfLoopResponder`
+    pub fn new() -> Self {
+        Self {
+            url: None,
+            port: None,
+            timeout: None,
+            responder_func: None,
         }
     }
-    Ok(tcp_handle.read_to_string())
+
+    /// Build a `CtfLoopResponder` for localhost on given port.
+    #[must_use]
+    pub fn localhost(port: u16) -> Self {
+        Self::new().url("localhost").port(port)
+    }
+
+    #[must_use]
+    /// Set url
+    pub fn url(self, url: &'a str) -> Self {
+        Self {
+            url: Some(url),
+            ..self
+        }
+    }
+
+    #[must_use]
+    /// Set port
+    pub fn port(self, port: u16) -> Self {
+        Self {
+            port: Some(port),
+            ..self
+        }
+    }
+
+    #[must_use]
+    /// Set timeout
+    pub fn timeout(self, timeout: u64) -> Self {
+        Self {
+            timeout: Some(timeout),
+            ..self
+        }
+    }
+
+    /// Set the responder routine runned on each server's message.
+    #[must_use]
+    pub fn responder_func(self, responder_func: impl Fn(&str) -> Option<String> + 'static) -> Self {
+        Self {
+            responder_func: Some(Box::new(responder_func)),
+            ..self
+        }
+    }
+
+    /// Connect to the server and use the struct routine to answer each incoming message.
+    ///
+    /// # Errors
+    ///
+    /// The function will fail if either url, port or responder routine is not defined.
+    /// It may also fails if TCP connection fail.
+    pub fn connect_and_work(&self) -> Result<String, CtfTcpHandlerError> {
+        let url = self.url.ok_or(CtfTcpHandlerError::ConfigurationError)?;
+        let port = self.port.ok_or(CtfTcpHandlerError::ConfigurationError)?;
+        let responder = self
+            .responder_func
+            .as_ref()
+            .ok_or(CtfTcpHandlerError::ConfigurationError)?;
+        let mut tcp_handler = self
+            .timeout
+            .map_or_else(
+                || TcpHandler::new(url, port),
+                |timeout| TcpHandler::new_with_timeout(url, port, timeout),
+            )
+            .map_err(|_| CtfTcpHandlerError::ConnectionError)?;
+
+        loop {
+            let input = tcp_handler.read_to_string();
+            println!("{input}");
+            if let Some(answer) = responder(&input) {
+                println!("{answer}");
+                tcp_handler.write_answer(&answer);
+            } else {
+                break;
+            }
+        }
+        Ok(tcp_handler.read_to_string())
+    }
 }
