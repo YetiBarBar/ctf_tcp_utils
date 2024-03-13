@@ -10,6 +10,7 @@ readme = "README.md"
 exclude = [".gitignore"]
 authors = ["YetiBarBar"]
 keywords = ["ctf", "tcp"]
+categories = ["network-programming"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
