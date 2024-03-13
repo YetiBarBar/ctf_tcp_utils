@@ -1,6 +1,6 @@
 [package]
 name = "ctf_tcp_utils"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "TCP helpers for CTFs"
@@ -10,8 +10,9 @@ readme = "README.md"
 exclude = [".gitignore"]
 authors = ["YetiBarBar"]
 keywords = ["ctf", "tcp"]
+categories = ["network-programming"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = "1"
+thiserror = "1.0.40"
