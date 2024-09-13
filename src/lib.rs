@@ -171,16 +171,17 @@ impl<'a> CtfLoopResponder<'a> {
             )
             .map_err(|_| CtfTcpHandlerError::ConnectionError)?;
 
-        loop {
+        let mut input = loop {
             let input = tcp_handler.read_to_string();
-            println!("{input}");
+            log::debug!("Received:\n{input}");
             if let Some(answer) = responder(&input) {
-                println!("{answer}");
+                log::debug!("Answered: {answer}");
                 tcp_handler.write_answer(&answer);
             } else {
-                break;
+                break input;
             }
-        }
-        Ok(tcp_handler.read_to_string())
+        };
+        input.push_str(&tcp_handler.read_to_string());
+        Ok(input)
     }
 }
