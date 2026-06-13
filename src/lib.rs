@@ -28,7 +28,7 @@ impl TcpHandler {
             TcpStream::connect(connection_uri).map_err(|_| CtfTcpHandlerError::ConnectionError)
         }?;
         stream
-            .set_read_timeout(Some(std::time::Duration::from_millis(1000)))
+            .set_read_timeout(Some(std::time::Duration::from_secs(1)))
             .map_err(|_| CtfTcpHandlerError::ConfigurationError)?;
 
         Ok(Self { stream })
@@ -90,7 +90,7 @@ pub struct CtfLoopResponder<'a> {
     responder_func: Option<BoxedFunction>,
 }
 
-impl<'a> Default for CtfLoopResponder<'a> {
+impl Default for CtfLoopResponder<'_> {
     fn default() -> Self {
         Self::new()
     }
